@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:custom_stream_builder/stream.dart';
 import 'package:flutter/material.dart';
 
@@ -30,32 +32,60 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   Stream<int>? stream;
+  final List<int> queueOfEvents = <int>[];
   final listOfWidgets = <Widget>[];
+  StreamSubscription<int>? subscription;
+  Timer? timer;
+
+  getStreamAndListen() {
+    stream = NumberGenrator(endOnTick: 50, const Duration(milliseconds: 3))
+        .getStream;
+    subscription = stream!.listen((event) {
+      queueOfEvents.add(event);
+      // print("from listener: $event");
+    });
+    //on onDone, cancel timer when queueOfEvents is empty. Need to notify and cancel.
+  }
+
+  startTimerOperation() {
+    timer = Timer.periodic(const Duration(milliseconds: 40), (timer) {
+      if (queueOfEvents.isNotEmpty) {
+        print("1");
+        //Could create a temp var for queueOfEvents here and use it below so that
+        //queueOfEvents can be cleard here asap
+        for (int number in queueOfEvents) {
+          listOfWidgets.add(Text(number.toString()));
+        }
+        queueOfEvents.clear();
+        setState(() {});
+        print("2");
+      }
+    });
+  }
+
+  disposeResources() {
+    subscription?.cancel();
+    timer?.cancel();
+  }
+
   @override
   Widget build(BuildContext context) {
+    print("building");
     return Scaffold(
         body: Center(
-            child: StreamBuilder(
-                key: ValueKey(stream.hashCode),
-                stream: stream,
-                builder: ((context, snapshot) {
-                  if (snapshot.hasData) {
-                    listOfWidgets.add(Text(snapshot.data.toString()));
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: listOfWidgets,
-                    );
-                  } else {
-                    return const CircularProgressIndicator();
-                  }
-                }))),
+          // child: SizedBox.shrink(),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: listOfWidgets,
+          ),
+        ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
             setState(() {
-              stream =
-                  NumberGenrator(endOnTick: 10, const Duration(milliseconds: 8))
-                      .getStream;
               listOfWidgets.clear();
+              disposeResources();
+              getStreamAndListen();
+              startTimerOperation();
             });
           },
           child: const Icon(Icons.replay_outlined),
