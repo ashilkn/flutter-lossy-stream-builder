@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:developer';
 
 class NumberGenrator {
   NumberGenrator(Duration duration, {required int endOnTick}) {
     Timer.periodic(duration, (timer) {
+      log("adding to stream from timer: ${timer.tick} at ${DateTime.now().millisecondsSinceEpoch}");
+
       _controller.add(timer.tick);
       if (endOnTick <= timer.tick) {
         timer.cancel();
