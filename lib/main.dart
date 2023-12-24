@@ -42,23 +42,17 @@ class _MyHomePageState extends State<MyHomePage> {
         .getStream;
     subscription = stream!.listen((event) {
       queueOfEvents.add(event);
-      // print("from listener: $event");
     });
-    //on onDone, cancel timer when queueOfEvents is empty. Need to notify and cancel.
   }
 
   startTimerOperation() {
     timer = Timer.periodic(const Duration(milliseconds: 40), (timer) {
       if (queueOfEvents.isNotEmpty) {
-        print("1");
-        //Could create a temp var for queueOfEvents here and use it below so that
-        //queueOfEvents can be cleard here asap
         for (int number in queueOfEvents) {
           listOfWidgets.add(Text(number.toString()));
         }
         queueOfEvents.clear();
         setState(() {});
-        print("2");
       }
     });
   }
